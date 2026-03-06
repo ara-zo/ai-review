@@ -32,7 +32,7 @@ async function fetchConventionDoc() {
         return null;
     }
 
-    const url = `${CONFLUENCE_BASE_URL}/rest/api/content/${CONFLUENCE_PAGE_ID}?expand=body.storage`;
+    const url = `${CONFLUENCE_BASE_URL}/wiki/rest/api/content/${CONFLUENCE_PAGE_ID}?expand=body.storage`;
     const res = await fetch(url, {
         headers: {
             Authorization: `Bearer ${CONFLUENCE_TOKEN}`,
