@@ -2,9 +2,12 @@
 const Anthropic = require('@anthropic-ai/sdk');
 
 // ── 환경변수 ────────────────────────────────────────────────────────────────
-const GITHUB_TOKEN       = process.env.GITHUB_TOKEN;
-const ANTHROPIC_API_KEY  = process.env.ANTHROPIC_API_KEY;
-const HEAD_SHA           = process.env.HEAD_SHA;
+const GITHUB_TOKEN          = process.env.GITHUB_TOKEN;
+const ANTHROPIC_API_KEY     = process.env.ANTHROPIC_API_KEY;
+const CONFLUENCE_BASE_URL   = process.env.CONFLUENCE_BASE_URL;
+const CONFLUENCE_TOKEN      = process.env.CONFLUENCE_TOKEN;
+const CONFLUENCE_PAGE_ID    = process.env.CONFLUENCE_PAGE_ID;
+const HEAD_SHA              = process.env.HEAD_SHA;
 const [owner, repo]      = (process.env.REPO ?? '').split('/');
 const PR_NUMBER          = parseInt(process.env.PR_NUMBER ?? '0', 10);
 
@@ -22,12 +25,25 @@ const MAX_PATCH_LENGTH = 5000;
 const MAX_FILES = 15;
 
 // ── 1. Confluence 컨벤션 문서 가져오기 ──────────────────────────────────────
+// ── 1. Confluence 컨벤션 문서 가져오기 ──────────────────────────────────────
 async function fetchConventionDoc() {
-    const CONVENTION_URL = 'https://deliveredkorea.atlassian.net/wiki/external/MDQ5MzM4NDY2MzFmNDc4MWFjNjkxZmQwNmFlODg4NTA';
+    if (!CONFLUENCE_BASE_URL || !CONFLUENCE_TOKEN || !CONFLUENCE_PAGE_ID) {
+        console.warn('⚠️  Confluence 환경변수가 설정되지 않았습니다.');
+        return null;
+    }
 
-    const res = await fetch(CONVENTION_URL);
-    const html = await res.text();
+    const url = `${CONFLUENCE_BASE_URL}/rest/api/content/${CONFLUENCE_PAGE_ID}?expand=body.storage`;
+    const res = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${CONFLUENCE_TOKEN}`,
+            Accept: 'application/json',
+        },
+    });
 
+    if (!res.ok) throw new Error(`Confluence API 오류: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+    const html = data.body?.storage?.value ?? '';
     return html
         .replace(/<[^>]+>/g, ' ')
         .replace(/&amp;/g, '&')
