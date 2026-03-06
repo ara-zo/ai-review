@@ -5,6 +5,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const GITHUB_TOKEN          = process.env.GITHUB_TOKEN;
 const ANTHROPIC_API_KEY     = process.env.ANTHROPIC_API_KEY;
 const CONFLUENCE_BASE_URL   = process.env.CONFLUENCE_BASE_URL;
+const CONFLUENCE_EMAIL      = process.env.CONFLUENCE_EMAIL;
 const CONFLUENCE_TOKEN      = process.env.CONFLUENCE_TOKEN;
 const CONFLUENCE_PAGE_ID    = process.env.CONFLUENCE_PAGE_ID;
 const HEAD_SHA              = process.env.HEAD_SHA;
