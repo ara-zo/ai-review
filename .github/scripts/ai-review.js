@@ -4,9 +4,6 @@ const Anthropic = require('@anthropic-ai/sdk');
 // ── 환경변수 ────────────────────────────────────────────────────────────────
 const GITHUB_TOKEN       = process.env.GITHUB_TOKEN;
 const ANTHROPIC_API_KEY  = process.env.ANTHROPIC_API_KEY;
-const CONFLUENCE_BASE_URL = process.env.CONFLUENCE_BASE_URL;
-const CONFLUENCE_TOKEN   = process.env.CONFLUENCE_TOKEN;
-const CONFLUENCE_PAGE_ID = process.env.CONFLUENCE_PAGE_ID;
 const HEAD_SHA           = process.env.HEAD_SHA;
 const [owner, repo]      = (process.env.REPO ?? '').split('/');
 const PR_NUMBER          = parseInt(process.env.PR_NUMBER ?? '0', 10);
@@ -46,21 +43,31 @@ async function fetchPRFiles() {
     const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${PR_NUMBER}/files`;
     const res = await fetch(url, { headers: GITHUB_HEADERS });
 
-    if (!res.ok) {
-        throw new Error(`GitHub API 오류: ${res.status} ${res.statusText}`);
-    }
+    if (!res.ok) throw new Error(`GitHub API 오류: ${res.status} ${res.statusText}`);
 
     const files = await res.json();
-
-    return files
+    const targets = files
         .filter(f => TARGET_EXTENSIONS.test(f.filename) && f.status !== 'removed')
-        .slice(0, MAX_FILES)
-        .map(f => ({
-            filename: f.filename,
-            status: f.status, // added | modified
-            patch: (f.patch ?? '').slice(0, MAX_PATCH_LENGTH),
-        }))
-        .filter(f => f.patch.length > 0);
+        .slice(0, MAX_FILES);
+
+    // 파일 전체 내용도 함께 가져오기
+    const result = await Promise.all(
+        targets.map(async f => {
+            const contentUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${f.filename}?ref=${HEAD_SHA}`;
+            const contentRes = await fetch(contentUrl, { headers: GITHUB_HEADERS });
+            const contentData = await contentRes.json();
+            const fullContent = Buffer.from(contentData.content, 'base64').toString('utf-8');
+
+            return {
+                filename: f.filename,
+                status: f.status,
+                patch: (f.patch ?? '').slice(0, MAX_PATCH_LENGTH),
+                fullContent: fullContent.slice(0, 8000), // 전체 파일 내용
+            };
+        })
+    );
+
+    return result.filter(f => f.patch.length > 0);
 }
 
 // ── 3. Claude로 리뷰 생성 ───────────────────────────────────────────────────
@@ -72,7 +79,17 @@ async function generateReview(conventionDoc, diffFiles) {
         : `## 팀 컨벤션 문서\n(문서 없음 - Google Java Style Guide 및 Kotlin Coding Conventions 기준 적용)`;
 
     const diffSection = diffFiles
-        .map(f => `### [${f.status.toUpperCase()}] ${f.filename}\n\`\`\`diff\n${f.patch}\n\`\`\``)
+        .map(f => `### [${f.status.toUpperCase()}] ${f.filename}
+
+            **변경된 부분 (diff):**
+            \`\`\`diff
+            ${f.patch}
+            \`\`\`
+            
+            **파일 전체 코드:**
+            \`\`\`kotlin
+            ${f.fullContent}
+            \`\`\``)
         .join('\n\n');
 
     const prompt = `당신은 10년 이상 경력의 Java/Kotlin 백엔드 시니어 개발자입니다.
