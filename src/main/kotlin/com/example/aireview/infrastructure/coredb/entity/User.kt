@@ -1,4 +1,4 @@
-package com.example.aireview
+package com.example.aireview.infrastructure.coredb.entity
 
 import java.time.LocalDateTime
 

@@ -1,10 +1,14 @@
-package com.example.aireview
+package com.example.aireview.core.user.service
 
+import com.example.aireview.infrastructure.coredb.entity.User
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import kotlin.jvm.java
 
-class TestService {
+@Service
+class UserService {
 
-    private val logger = LoggerFactory.getLogger(TestService::class.java)
+    private val logger = LoggerFactory.getLogger(UserService::class.java)
 
     fun getUserList(): List<User> {
         val list = mutableListOf<User>()
