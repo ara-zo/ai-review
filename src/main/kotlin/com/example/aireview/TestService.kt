@@ -1,15 +1,19 @@
 package com.example.aireview
 
+import org.slf4j.LoggerFactory
+
 class TestService {
-    class TestService {
-        fun Get_User_List() : List<Any> {  // 네이밍 컨벤션 위반
-            val list = ArrayList<Any>()
-            try {
-                // something
-            } catch (e: Exception) {
-                // 빈 catch 블록
-            }
-            return list
+
+    private val logger = LoggerFactory.getLogger(TestService::class.java)
+
+    fun getUserList(): List<User> {
+        val list = mutableListOf<User>()
+        try {
+            mutableListOf<User>()
+        } catch (e: Exception) {
+            // 로깅 처리
+            logger.error("Failed to get user list", e)
         }
+        return list
     }
 }
