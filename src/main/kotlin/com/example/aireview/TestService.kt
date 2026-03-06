@@ -1,8 +1,8 @@
 package com.example.aireview
 
 class TestService {
-    fun Get_User_List() : List<Any> {  // 네이밍 컨벤션 위반
-        val list = ArrayList<Any>()
+    fun getUserList(): List<Any> {
+        val list = mutableListOf<Any>()
         try {
             // something
         } catch (e: Exception) {
