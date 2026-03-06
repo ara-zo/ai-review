@@ -35,7 +35,7 @@ async function fetchConventionDoc() {
     const url = `${CONFLUENCE_BASE_URL}/wiki/rest/api/content/${CONFLUENCE_PAGE_ID}?expand=body.storage`;
     const res = await fetch(url, {
         headers: {
-            Authorization: `Bearer ${CONFLUENCE_TOKEN}`,
+            Authorization: `Basic ${Buffer.from(`${CONFLUENCE_EMAIL}:${CONFLUENCE_TOKEN}`).toString('base64')}`,
             Accept: 'application/json',
         },
     });
